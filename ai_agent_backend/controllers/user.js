@@ -6,8 +6,15 @@ import {inngest} from "../inngest/client.js"
 export const signup = async (req, res) => {
     const {email, password, skills = []} = req.body;
     try {
-        const hashed = bcrypt.hash(password, 10);
+        console.log("Attempting to sign up user with email:", email);
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            console.log("Email already in use:", email);
+            return res.status(400).json({ error: "Email already in use" });
+        }
+        const hashed = await bcrypt.hash(password, 10);
         const user = await User.create({email, password: hashed, skills});
+        console.log("User created successfully:", user._id);
 
         await inngest.send({
             name: "user/signup",
@@ -31,7 +38,7 @@ export const login = async (req, res) => {
     const {email, password} = req.body;
 
     try {
-        const user = User.findOne({email});
+        const user = await User.findOne({email});
         if(!user) return res.status(401).json({error: "User not found"});
 
         const isMatch = await bcrypt.compare(password, user.password);
@@ -50,7 +57,7 @@ export const login = async (req, res) => {
 
 export const logout = async (req, res) => {
     try {
-        const token = req.headers.authorizaation.split(" ")[1];
+        const token = req.headers.authorization.split(" ")[1];
         if(!token) return res.status(401).json({error: "Unauthorized"});
         jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
             if (err) return res.status(401).json({error: "Unauthorized"});

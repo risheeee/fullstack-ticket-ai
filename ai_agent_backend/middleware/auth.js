@@ -8,6 +8,6 @@ export const authenticate = (req, res, next) => {
         req.user = decoded;
         next();
     } catch (error) {
-        res.status(401).json({error: "Inva;id token"});
+        res.status(401).json({error: "Invalid token"});
     }
 };

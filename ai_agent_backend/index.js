@@ -25,9 +25,9 @@ app.use("/api/inngest", serve({
 }));
 
 mongoose
-    .connect(process.env.MONGO_URL)
+    .connect(process.env.MONGO_URI)
     .then(() => {
         console.log("✅ MongoDB Connected !!");
-        app.listen(PORT, () => console.log("Server running at http://locahost:3000"))
+        app.listen(PORT, () => console.log("Server running at http://localhost:3000"))
     })
     .catch((err) => console.error("❌ MongoDB error: ", err));

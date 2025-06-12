@@ -6,14 +6,14 @@ import {sendMail} from "../../utils/mailer.js"
 import analyzeTicket from "../../utils/ai.js"
 
 export const onTicketCreated = inngest.createFunction(
-    {id: "on-ticket-created", reetires: 2},
+    {id: "on-ticket-created", retries: 2},
     {event: "ticket/created"},
     async ({event, step}) => {
         try {
             const {ticketId} = event.data;
             const ticket = await step.run("fetch-ticket", async () => {
                 const ticketObject = await Ticket.findById(ticketId);
-                if(!ticket) throw new NonRetriableError("tiket not founf");
+                if(!ticketObject) throw new NonRetriableError("ticket not found");
                 return ticketObject;
             });
 
@@ -27,9 +27,9 @@ export const onTicketCreated = inngest.createFunction(
                 let skills = [];
                 if(aiResponse) {
                     await Ticket.findByIdAndUpdate(ticket._id, {
-                        prioriy: !["low", "medium", "high"].includes(aiResponse.prioriy)
+                        priority: !["low", "medium", "high"].includes(aiResponse.priority)
                         ? "medium"
-                        : aiResponse.prioriy,
+                        : aiResponse.priority,
                         helpfulNotes: aiResponse.helpfulNotes,
                         status: "IN_PROGRESS",
                         relatedSkills: aiResponse.relatedSkills,
@@ -40,20 +40,8 @@ export const onTicketCreated = inngest.createFunction(
             });
 
             const moderator = await step.run("assign-moderator", async () => {
-                let user = await User.findOne({
-                    role: "moderator",
-                    skills: {
-                        $elemMatch: {
-                            $regex: relatedSkills.join("|"),
-                            $options: "i",
-                        },
-                    },
-                });
-                if(!user) {
-                    user = await User.findOne({
-                        role: "admin",
-                    });
-                }
+                // Always assign to the first admin user
+                let user = await User.findOne({ role: "admin" });
                 await Ticket.findByIdAndUpdate(ticket._id, {
                     assignedTo: user?._id || null,
                 });

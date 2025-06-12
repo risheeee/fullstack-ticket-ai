@@ -4,7 +4,7 @@ import { NonRetriableError } from "inngest";
 import {sendMail} from "../../utils/mailer.js";
 
 export const onUserSignup = inngest.createFunction(
-    {id: "on-uer-signup", retries: 2},
+    {id: "on-user-signup", retries: 2},
     {event: "user/signup"},
     async ({event, step}) => {
         try {
@@ -12,7 +12,7 @@ export const onUserSignup = inngest.createFunction(
             const user = await step.run("get-user-email", async () => {
                 const userObject = await User.findOne({email});
                 if(!userObject) {
-                    throw new NonRetriableError("User dosen't exists in our database");
+                    throw new NonRetriableError("User does not exist in our database");
                 }
                 return userObject
             });
